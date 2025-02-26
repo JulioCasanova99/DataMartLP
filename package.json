@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "ts-node-dev src/index.ts",
     "build": "tsc",
-    "start": "ts-node-dev src/index.ts"
+    "db:generate": "npx prisma generate",
+    "start": "npm run db:generate && ts-node-dev src/index.ts"
 
   },
   "keywords": [],
