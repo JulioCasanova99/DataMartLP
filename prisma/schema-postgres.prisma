@@ -1,0 +1,193 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String?  @unique @db.VarChar(50)
+  password  String?  @db.VarChar(255)
+  roleId    Int      @db.Integer
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  role      Role?    @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+
+  @@index([roleId])
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  type      String?  @unique @db.VarChar(50)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  users     User[]
+}
+
+model Subject {
+  id             String          @id @db.VarChar(20)
+  name           String?         @db.VarChar(100)
+  description    String?         @db.VarChar(255)
+  createdAt      DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
+  courseTeachers CourseTeacher[]
+  grades         Grade[]
+}
+
+model Student {
+  id                Int                @id @default(autoincrement())
+  dni               String?            @db.VarChar(15)
+  firstName         String?            @db.VarChar(50)
+  lastName          String?            @db.VarChar(50)
+  gender            GenderEnum?
+  address           String?            @db.VarChar(255)
+  dateOfBirth       DateTime?          @db.Timestamptz(6)
+  representativeId  Int?               @db.Integer
+  courseId          String?            @db.VarChar(20)
+  academicYearId    String?            @db.VarChar(20)
+  createdAt         DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  representative    Representative?    @relation(fields: [representativeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  course            Course?            @relation(fields: [courseId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  grades            Grade[]
+  disciplineRecords DisciplineRecord[]
+  academicYear      AcademicYear?      @relation(fields: [academicYearId], references: [id])
+
+  @@index([representativeId])
+}
+
+model Period {
+  id                Int                @id @default(autoincrement())
+  sortOrder         String?            @db.VarChar(50)
+  name              String?            @db.VarChar(50)
+  label             String?            @db.VarChar(50)
+  typePeriodId      String             @db.VarChar(20)
+  academicYearId    String?            @db.VarChar(20)
+  formula           String?            @db.VarChar(255)
+  isRelevant        Boolean            @default(false)
+  createdAt         DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  typePeriod        TypePeriod?        @relation(fields: [typePeriodId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  academicYear      AcademicYear?      @relation(fields: [academicYearId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  grades            Grade[]
+  disciplineRecords DisciplineRecord[]
+
+  @@index([typePeriodId])
+}
+
+model TypePeriod {
+  id        String   @id @db.VarChar(20)
+  type      String?  @unique @db.VarChar(100)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  periods   Period[]
+}
+
+model Representative {
+  id           Int       @id @default(autoincrement())
+  dni          String?   @unique @db.VarChar(15)
+  name         String?   @db.VarChar(50)
+  lastName     String?   @db.VarChar(50)
+  email        String?   @unique @db.VarChar(100)
+  workPlace    String?   @db.VarChar(200)
+  workstation  String?   @db.VarChar(200)
+  phone1       String?   @db.VarChar(15)
+  phone2       String?   @db.VarChar(15)
+  address      String?   @db.VarChar(255)
+  relationship String?   @db.VarChar(100)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  students     Student[]
+
+  @@index([dni])
+  @@index([email])
+}
+
+model Course {
+  id             String          @id @db.VarChar(20)
+  name           String?         @db.VarChar(100)
+  createdAt      DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
+  student        Student[]
+  courseTeachers CourseTeacher[]
+}
+
+model Teacher {
+  id             Int             @id @default(autoincrement())
+  dni            String?         @unique @db.VarChar(15)
+  firstName      String?         @db.VarChar(50)
+  lastName       String?         @db.VarChar(50)
+  email          String?         @unique @db.VarChar(100)
+  phone          String?         @db.VarChar(15)
+  createdAt      DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
+  courseTeachers CourseTeacher[]
+
+  @@index([email])
+  @@index([dni])
+}
+
+model CourseTeacher {
+  teacherId      Int           @db.Integer
+  subjectId      String        @db.VarChar(20)
+  courseId       String        @db.VarChar(20)
+  academicYearId String        @db.VarChar(20)
+  createdAt      DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  teacher        Teacher?      @relation(fields: [teacherId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  subject        Subject?      @relation(fields: [subjectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  course         Course?       @relation(fields: [courseId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id])
+
+  @@id([subjectId, teacherId, courseId, academicYearId])
+}
+
+model Grade {
+  id        Int      @id @default(autoincrement())
+  studentId Int      @db.Integer
+  subjectId String?  @db.VarChar(20)
+  periodId  Int?     @db.Integer
+  score     Decimal? @db.Decimal(5, 2)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  period    Period?  @relation(fields: [periodId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([studentId, subjectId, periodId])
+}
+
+model DisciplineRecord {
+  id          Int      @id @default(autoincrement())
+  studentId   Int      @db.Integer
+  periodId    Int      @db.Integer
+  observation String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  student     Student? @relation(fields: [studentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  period      Period?  @relation(fields: [periodId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([studentId, periodId])
+}
+
+model AcademicYear {
+  id             String          @id @db.VarChar(20)
+  name           String          @unique @db.VarChar(50)
+  startDate      DateTime        @db.Timestamptz(6)
+  endDate        DateTime        @db.Timestamptz(6)
+  createdAt      DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
+  periods        Period[]
+  courseTeachers CourseTeacher[]
+  students       Student[]
+}
+
+enum GenderEnum {
+  Male
+  Female
+  Other
+}
