@@ -72,10 +72,6 @@ export class PeriodController {
         return
       }
 
-      if (body.academicYearId && isNaN(Number(body.academicYearId))) {
-        reply.code(400).send({ error: 'Invalid "academicYearId" field' })
-        return
-      }
 
       if (body.formula && typeof body.formula !== 'string') {
         reply.code(400).send({ error: 'Invalid "formula" field' })
